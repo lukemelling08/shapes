@@ -1,31 +1,25 @@
 local Entity = require("main.modules.entity")
 local Renderer = require("main.modules.render")
 local Camera = require("main.modules.camera")
+local InputHandler = require("main.modules.input_handler")
+
+local fixed_dt = 1 / sys.get_config_int("engine.fixed_update_frequency", 60)
 
 function init(self)
+	msg.post(".", "acquire_input_focus")
 	Renderer:init(msg.url("/renderer#mesh"))
-	local player = Entity:create({0,0})
+	self.player = Entity:create({0,0})
+	Entity.vip.player = self.player
 	local player2 = Entity:create({30,0})
+	Camera:follow(self.player)
+end
+
+function on_input(self, action_id, action)
+	InputHandler:on_input(action_id, action)
 end
 
 function update(self, dt)
-	local camera = Camera
-
-	local width, height = window.get_size()
-
-	camera.view_w = camera.view_h * (width / height)
-
-	local view_w = camera.view_w / camera.zoom
-	local view_h = camera.view_h / camera.zoom
-
-	go.set("/renderer#mesh", "cam",
-		vmath.vector4(
-			camera.x,
-			camera.y,
-			2 / view_w,
-			2 / view_h
-		)
-	)
+	Camera:update(dt)
 	
 	Renderer:clear()
 	for _, entity in pairs(Entity.active) do
@@ -36,7 +30,8 @@ end
 
 function fixed_update(self, dt)
 	for _, entity in pairs(Entity.active) do
+		entity.pos.previous.x = entity.pos.x
+		entity.pos.previous.y = entity.pos.y
 		entity:update_pos(dt)
-		print(entity:get_pos())
 	end
 end

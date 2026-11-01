@@ -1,17 +1,37 @@
 local Entity = {
 	active = {},
+	vip = {
+		player = nil
+	},
 	next_id = 1
 }
 local Renderer = require("main.modules.render")
+local InputHandler = require("main.modules.input_handler")
 
 function Entity:new()
 	local entity = {
 		id = Entity.next_id,
-		x = 0,
-		y = 0,
+		pos = {
+			-- current x and y
+			x = 0,
+			y = 0,
+			previous = {
+				x = 0,
+				y = 0
+			}
+		},
+		velocity = {
+			x = 0,
+			y = 0,
+			max = 45
+		},
+		acceleration = {
+			speed = 500,
+			x = 0,
+			y = 0
+		},
+		friction = 200,
 		rotation = 0,
-		v_x = 0,
-		v_y = 0
 	}
 
 	function entity:register()
@@ -23,22 +43,70 @@ function Entity:new()
 	end
 
 	function entity:render()
-		Renderer:draw_entity(self)
+		Renderer:draw_entity(self, 0.05)
 	end
 
 	function entity:set_pos(x, y)
-		self.x = x
-		self.y = y
+		self.pos.x = x
+		self.pos.y = y
 	end
 
 	function entity:get_pos()
-		return self.x, self.y
+		return self.pos.x, self.pos.y
 	end
 
 
 	function entity:update_pos(dt)
-		self.x = self.x + (self.v_x*dt)
-		self.y = self.y + (self.v_y*dt)
+		if self == Entity.vip.player then
+			local speed = self.acceleration.speed
+			if (not InputHandler.keys[hash("a")] and not InputHandler.keys[hash("d")])
+			or (InputHandler.keys[hash("a")] and InputHandler.keys[hash("d")]) then
+				self.acceleration.x = 0
+			else
+				if InputHandler.keys[hash("a")] then
+					self.acceleration.x = -speed
+				elseif InputHandler.keys[hash("d")] then
+					self.acceleration.x = speed
+				end
+			end
+
+			if (not InputHandler.keys[hash("w")] and not InputHandler.keys[hash("s")])
+			or (InputHandler.keys[hash("w")] and InputHandler.keys[hash("s")]) then
+				self.acceleration.y = 0
+			else
+				if InputHandler.keys[hash("w")] then
+					self.acceleration.y = speed
+				elseif InputHandler.keys[hash("s")] then
+					self.acceleration.y = -speed
+				end
+			end
+		end
+
+		for _, axis in ipairs({"x", "y"}) do
+			local velocity = self.velocity[axis]
+			local acceleration = self.acceleration[axis]
+
+			velocity = velocity + acceleration * dt
+
+			if velocity > 0 then
+				velocity = math.max(0, velocity - self.friction * dt)
+			elseif velocity < 0 then
+				velocity = math.min(0, velocity + self.friction * dt)
+			end
+
+			self.velocity[axis] = velocity
+			self.pos[axis] = self.pos[axis] + velocity * dt
+		end
+
+		local magnitude = math.sqrt(
+			self.velocity.x^2 + self.velocity.y^2
+		)
+
+		if magnitude > self.velocity.max then
+			local scale = self.velocity.max / magnitude
+			self.velocity.x = self.velocity.x * scale
+			self.velocity.y = self.velocity.y * scale
+		end
 	end
 
 	Entity.next_id = Entity.next_id + 1

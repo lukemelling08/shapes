@@ -35,8 +35,14 @@ function Renderer:clear()
 	self.vertices = {}
 end
 
-function Renderer:draw_entity(entity)
+function Renderer:draw_entity(entity, interpolation)
 	local half = 2
+
+	local lerp_x = entity.pos.previous.x
+	+ (entity.pos.x - entity.pos.previous.x) * interpolation
+
+	local lerp_y = entity.pos.previous.y
+	+ (entity.pos.y - entity.pos.previous.y) * interpolation
 
 	local cos = math.cos(entity.rotation)
 	local sin = math.sin(entity.rotation)
@@ -54,8 +60,8 @@ function Renderer:draw_entity(entity)
 		local x = corner[1]
 		local y = corner[2]
 
-		local world_x = x * cos - y * sin + entity.x
-		local world_y = x * sin + y * cos + entity.y
+		local world_x = x * cos - y * sin + lerp_x
+		local world_y = x * sin + y * cos + lerp_y
 
 		table.insert(transformed, {world_x, world_y, 0})
 	end
@@ -69,7 +75,6 @@ end
 
 function Renderer:flush()
 	local vertex_count = #self.vertices
-	print("Vertices:", vertex_count)
 
 	if vertex_count > self.max_vertices then
 		error("Renderer vertex capacity exceeded!")
