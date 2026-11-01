@@ -1,12 +1,32 @@
 local Entity = require("main.modules.entity")
 local Renderer = require("main.modules.render")
+local Camera = require("main.modules.camera")
 
 function init(self)
 	Renderer:init(msg.url("/renderer#mesh"))
 	local player = Entity:create({0,0})
+	local player2 = Entity:create({30,0})
 end
 
 function update(self, dt)
+	local camera = Camera
+
+	local width, height = window.get_size()
+
+	camera.view_w = camera.view_h * (width / height)
+
+	local view_w = camera.view_w / camera.zoom
+	local view_h = camera.view_h / camera.zoom
+
+	go.set("/renderer#mesh", "cam",
+		vmath.vector4(
+			camera.x,
+			camera.y,
+			2 / view_w,
+			2 / view_h
+		)
+	)
+	
 	Renderer:clear()
 	for _, entity in pairs(Entity.active) do
 		entity:render()
