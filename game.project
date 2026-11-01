@@ -6,7 +6,7 @@ shared_state = 1
 
 [display]
 width = 960
-height = 640
+height = 960
 high_dpi = 1
 
 [android]
@@ -18,6 +18,8 @@ scale = 0.01
 
 [html5]
 scale_mode = stretch
+show_made_with_defold = 0
+show_fullscreen_button = 0
 
 [project]
 title = shapes

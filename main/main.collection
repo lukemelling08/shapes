@@ -1,2 +1,38 @@
 name: "main"
 scale_along_z: 0
+embedded_instances {
+  id: "game_controller"
+  data: "components {\n"
+  "  id: \"game\"\n"
+  "  component: \"/main/scripts/game.script\"\n"
+  "}\n"
+  ""
+}
+embedded_instances {
+  id: "renderer"
+  data: "embedded_components {\n"
+  "  id: \"mesh\"\n"
+  "  type: \"mesh\"\n"
+  "  data: \"material: \\\"/assets/character/character.material\\\"\\n"
+  "vertices: \\\"/assets/character/character.buffer\\\"\\n"
+  "position_stream: \\\"position\\\"\\n"
+  "normal_stream: \\\"normal\\\"\\n"
+  "\"\n"
+  "}\n"
+  ""
+}
+embedded_instances {
+  id: "camera"
+  data: "embedded_components {\n"
+  "  id: \"camera\"\n"
+  "  type: \"camera\"\n"
+  "  data: \"aspect_ratio: 1.0\\n"
+  "fov: 0.7854\\n"
+  "near_z: 0.1\\n"
+  "far_z: 1000.0\\n"
+  "orthographic_projection: 1\\n"
+  "orthographic_mode: ORTHO_MODE_AUTO_FIT\\n"
+  "\"\n"
+  "}\n"
+  ""
+}

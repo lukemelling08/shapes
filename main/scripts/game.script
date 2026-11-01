@@ -1,0 +1,22 @@
+local Entity = require("main.modules.entity")
+local Renderer = require("main.modules.render")
+
+function init(self)
+	Renderer:init(msg.url("/renderer#mesh"))
+	local player = Entity:create({0,0})
+end
+
+function update(self, dt)
+	Renderer:clear()
+	for _, entity in pairs(Entity.active) do
+		entity:render()
+	end
+	Renderer:flush()
+end
+
+function fixed_update(self, dt)
+	for _, entity in pairs(Entity.active) do
+		entity:update_pos(dt)
+		print(entity:get_pos())
+	end
+end
