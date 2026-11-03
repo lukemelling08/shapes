@@ -38,44 +38,45 @@ function Renderer:clear()
 	self.vertices = {}
 end
 
-function Renderer:draw_entity(entity, interpolation)
-	local half = 2
+function Renderer:render_shape(entity, x, y, cos, sin)
+	if entity.type == EntityType.PLAYER then
+		self:draw_player(x, y, cos, sin)
 
-	local lerp_x = entity.pos.previous.x
-	+ (entity.pos.x - entity.pos.previous.x) * interpolation
+	elseif entity.type == EntityType.PROJECTILE then
+		self:draw_projectile(2, x, y, cos, sin)
 
-	local lerp_y = entity.pos.previous.y
-	+ (entity.pos.y - entity.pos.previous.y) * interpolation
+	elseif entity.type == EntityType.ENEMY then
+		self:draw_enemy(x, y, cos, sin)
+	end
+end
 
-	local cos = math.cos(entity.rotation)
-	local sin = math.sin(entity.rotation)
+
+function Renderer:draw_rectangle(width, height, x, y, cos, sin)
+	local half_w = width / 2
+	local half_h = height / 2
 
 	local corners = {
-		{-half, -half},
-		{ half, -half},
-		{ half,  half},
-		{-half,  half}
+		{-half_w, -half_h},
+		{ half_w, -half_h},
+		{ half_w,  half_h},
+		{-half_w,  half_h}
 	}
-
-	local transformed = {}
-
-	for _, corner in ipairs(corners) do
-		local x = corner[1]
-		local y = corner[2]
-
-		local world_x = x * cos - y * sin + lerp_x
-		local world_y = x * sin + y * cos + lerp_y
-
-		table.insert(transformed, {world_x, world_y, 0})
-	end
 
 	local indices = {1, 2, 3, 1, 3, 4}
 
 	for _, index in ipairs(indices) do
-		table.insert(self.vertices, transformed[index])
-	end
+		local vertex = corners[index]
 
-	-- Direction indicator
+		local world_x = vertex[1] * cos - vertex[2] * sin + x
+		local world_y = vertex[1] * sin + vertex[2] * cos + y
+
+		table.insert(self.vertices, {world_x, world_y, 0})
+	end
+end
+
+function Renderer:draw_player(x, y, cos, sin)
+	self:draw_rectangle(4, 4, x, y, cos, sin)
+
 	local triangle = {
 		{3, 0},
 		{1.5, 1},
@@ -83,14 +84,35 @@ function Renderer:draw_entity(entity, interpolation)
 	}
 
 	for _, vertex in ipairs(triangle) do
-		local x = vertex[1]
-		local y = vertex[2]
-
-		local world_x = x * cos - y * sin + lerp_x
-		local world_y = x * sin + y * cos + lerp_y
+		local world_x = vertex[1] * cos - vertex[2] * sin + x
+		local world_y = vertex[1] * sin + vertex[2] * cos + y
 
 		table.insert(self.vertices, {world_x, world_y, 0})
 	end
+end
+
+function Renderer:draw_projectile(projectile_type, x, y, cos, sin)
+	if projectile_type == 2 then
+		self:draw_rectangle(3, 1, x, y, cos, sin)
+	end
+end
+
+function Renderer:draw_enemy(x, y, cos, sin)
+	-- Enemy shape goes here
+	self:draw_rectangle(4, 4, x, y, cos, sin)
+end
+
+function Renderer:draw_entity(entity, interpolation)
+	local x = entity.pos.previous.x
+	+ (entity.pos.x - entity.pos.previous.x) * interpolation
+
+	local y = entity.pos.previous.y
+	+ (entity.pos.y - entity.pos.previous.y) * interpolation
+
+	local cos = math.cos(entity.rotation)
+	local sin = math.sin(entity.rotation)
+
+	self:render_shape(entity, x, y, cos, sin)
 end
 
 function Renderer:flush()

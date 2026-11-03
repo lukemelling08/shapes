@@ -33,7 +33,7 @@ function on_input(self, action_id, action)
 			y = math.sin(player.rotation) * speed
 		}
 
-		return  Projectile:fire(EntityType.PROJECTILE.BULLET, player.pos, velocity, player.rotation, 0.1)
+		return  Projectile:fire(EntityType.PROJECTILE, player.pos, velocity, player.rotation, 0.1)
 	end
 
 	if action_id == hash("lmb") and action.pressed then
