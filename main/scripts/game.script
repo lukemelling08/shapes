@@ -2,20 +2,44 @@ local Entity = require("main.modules.entity")
 local Renderer = require("main.modules.render")
 local Camera = require("main.modules.camera")
 local InputHandler = require("main.modules.input_handler")
+local EntityType = require("main.modules.entity_type")
+local Projectile = require("main.modules.projectile")
 
 local fixed_dt = 1 / sys.get_config_int("engine.fixed_update_frequency", 60)
 
 function init(self)
 	msg.post(".", "acquire_input_focus")
 	Renderer:init(msg.url("/renderer#mesh"))
-	self.player = Entity:create({0,0})
+	self.player = Entity:create({type=EntityType.PLAYER, pos={x=0,y=0}})
 	Entity.vip.player = self.player
-	local player2 = Entity:create({30,0})
+	local player2 = Entity:create({type=EntityType.PLAYER, pos={x=30,y=0}, velocity = {x = 3000, y = 900}, friction = 0.1})
 	Camera:follow(self.player)
 end
 
 function on_input(self, action_id, action)
 	InputHandler:on_input(action_id, action)
+
+	local function fire_projectile()
+		local player = Entity.vip.player
+
+		if not InputHandler.mouse.x or not InputHandler.mouse.y then
+			return
+		end
+
+		local speed = 900
+
+		local velocity = {
+			x = math.cos(player.rotation) * speed,
+			y = math.sin(player.rotation) * speed
+		}
+
+		return  Projectile:fire(EntityType.PROJECTILE.BULLET, player.pos, velocity, player.rotation, 0.1)
+	end
+
+	if action_id == hash("lmb") and action.pressed then
+		local projectile = fire_projectile()
+		projectile.owner = Entity.vip.player
+	end
 end
 
 function update(self, dt)

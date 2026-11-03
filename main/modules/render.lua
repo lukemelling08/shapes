@@ -2,6 +2,9 @@ local Renderer = {
 	vertices = {}
 }
 
+local EntityType = require("main.modules.entity_type")
+local ProjectileType = require("main.modules.entity_type")
+
 function Renderer:init(mesh_url)
 	self.mesh_url = mesh_url
 	self.vertex_resource = go.get(mesh_url, "vertices")

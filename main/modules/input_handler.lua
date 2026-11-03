@@ -4,7 +4,8 @@ local InputHandler = {
 		[hash("a")] = false,
 		[hash("s")] = false,
 		[hash("d")] = false,
-		[hash("lshift")] = false
+		[hash("lshift")] = false,
+		[hash("lmb")] = false
 	},
 	mouse = {
 		x = nil,
@@ -12,18 +13,21 @@ local InputHandler = {
 	}
 }
 
+local Camera = require("main.modules.camera")
+
 function InputHandler:on_input(action_id, action)
-	if action.x and action.y then
-		self.mouse.x = action.x
-		self.mouse.y = action.y
-		return
+	if self.keys[action_id] ~= nil then
+		if action.pressed then
+			self.keys[action_id] = true
+		elseif action.released then
+			self.keys[action_id] = false
+		end
 	end
 	
-	if self.keys[action_id] == nil then return end
-	if action.pressed then
-		self.keys[action_id] = true
-	elseif action.released then
-		self.keys[action_id] = false
+	if action.screen_x and action.screen_y then
+		self.mouse.x = action.screen_x
+		self.mouse.y = action.screen_y
+		return
 	end
 end
 

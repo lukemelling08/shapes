@@ -8,6 +8,7 @@ local Entity = {
 local Renderer = require("main.modules.render")
 local InputHandler = require("main.modules.input_handler")
 local Camera = require("main.modules.camera")
+local EntityType = require("main.modules.entity_type")
 
 function Entity:new()
 	local entity = {
@@ -36,6 +37,7 @@ function Entity:new()
 		},
 		friction = 200,
 		rotation = 0,
+		type = nil
 	}
 
 	function entity:register()
@@ -70,9 +72,6 @@ function Entity:new()
 		if self == Entity.vip.player then
 			if InputHandler.mouse.x ~= nil and InputHandler.mouse.y ~= nil then
 				local mouse_pos = Camera:screen_to_world(InputHandler.mouse.x, InputHandler.mouse.y)
-				print("Player:", self.pos.x, self.pos.y)
-				print("Mouse:", mouse_pos.x, mouse_pos.y)
-				print("Delta:", mouse_pos.x - self.pos.x, mouse_pos.y - self.pos.y)
 				self:face(mouse_pos.x, mouse_pos.y)
 			end
 			
@@ -134,9 +133,29 @@ function Entity:new()
 	return entity
 end
 
-function Entity:create(pos)
+function Entity:create(data)
+	data = data or {}
 	local entity = self:new()
-	entity:set_pos(pos[1], pos[2])
+	if data.pos and data.pos.x and data.pos.y then
+		entity:set_pos(data.pos.x, data.pos.y)
+	end
+	if data.type then
+		entity.type = data.type
+	end
+	if data.velocity then
+		if data.velocity.x then
+			entity.velocity.x = data.velocity.x
+		end
+		if data.velocity.y then
+			entity.velocity.y = data.velocity.y
+		end
+	end
+	if data.friction then
+		entity.friction = data.friction
+	end
+	if data.rotation then
+		entity.rotation = data.rotation
+	end
 	entity:register()
 	return entity
 end
