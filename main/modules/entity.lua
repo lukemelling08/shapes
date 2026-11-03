@@ -7,6 +7,7 @@ local Entity = {
 }
 local Renderer = require("main.modules.render")
 local InputHandler = require("main.modules.input_handler")
+local Camera = require("main.modules.camera")
 
 function Entity:new()
 	local entity = {
@@ -23,12 +24,15 @@ function Entity:new()
 		velocity = {
 			x = 0,
 			y = 0,
-			max = 45
 		},
 		acceleration = {
 			speed = 500,
 			x = 0,
 			y = 0
+		},
+		speed = {
+			base = 25,
+			max = 45
 		},
 		friction = 200,
 		rotation = 0,
@@ -55,9 +59,23 @@ function Entity:new()
 		return self.pos.x, self.pos.y
 	end
 
+	function entity:face(x, y)
+		local dx = x - self.pos.x
+		local dy = y - self.pos.y
+		self.rotation = math.atan2(dy, dx)
+	end
+
 
 	function entity:update_pos(dt)
 		if self == Entity.vip.player then
+			if InputHandler.mouse.x ~= nil and InputHandler.mouse.y ~= nil then
+				local mouse_pos = Camera:screen_to_world(InputHandler.mouse.x, InputHandler.mouse.y)
+				print("Player:", self.pos.x, self.pos.y)
+				print("Mouse:", mouse_pos.x, mouse_pos.y)
+				print("Delta:", mouse_pos.x - self.pos.x, mouse_pos.y - self.pos.y)
+				self:face(mouse_pos.x, mouse_pos.y)
+			end
+			
 			local speed = self.acceleration.speed
 			if (not InputHandler.keys[hash("a")] and not InputHandler.keys[hash("d")])
 			or (InputHandler.keys[hash("a")] and InputHandler.keys[hash("d")]) then
@@ -102,8 +120,11 @@ function Entity:new()
 			self.velocity.x^2 + self.velocity.y^2
 		)
 
-		if magnitude > self.velocity.max then
-			local scale = self.velocity.max / magnitude
+		local sprinting = InputHandler.keys[hash("lshift")]
+		local max_speed = sprinting and self.speed.max or self.speed.base
+
+		if magnitude > max_speed then
+			local scale = max_speed / magnitude
 			self.velocity.x = self.velocity.x * scale
 			self.velocity.y = self.velocity.y * scale
 		end

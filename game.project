@@ -25,5 +25,5 @@ show_fullscreen_button = 0
 title = shapes
 
 [engine]
-fixed_update_frequency = 240
+fixed_update_frequency = 120
 

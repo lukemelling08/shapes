@@ -71,6 +71,23 @@ function Renderer:draw_entity(entity, interpolation)
 	for _, index in ipairs(indices) do
 		table.insert(self.vertices, transformed[index])
 	end
+
+	-- Direction indicator
+	local triangle = {
+		{3, 0},
+		{1.5, 1},
+		{1.5, -1}
+	}
+
+	for _, vertex in ipairs(triangle) do
+		local x = vertex[1]
+		local y = vertex[2]
+
+		local world_x = x * cos - y * sin + lerp_x
+		local world_y = x * sin + y * cos + lerp_y
+
+		table.insert(self.vertices, {world_x, world_y, 0})
+	end
 end
 
 function Renderer:flush()

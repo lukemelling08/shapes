@@ -25,6 +25,18 @@ function Camera:set_rotation(rotation)
 	self.rotation = rotation
 end
 
+function Camera:screen_to_world(screen_x, screen_y)
+	local width, height = window.get_size()
+
+	local x = (screen_x / width) * 2 - 1
+	local y = (screen_y / height) * 2 - 1
+
+	return {
+		x = self.x + x * width / 2,
+		y = self.y + y * height / 2
+	}
+end
+
 function Camera:update(dt)
 	if self.target then
 		local lerp = 5 * dt
