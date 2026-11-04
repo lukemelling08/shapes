@@ -1,6 +1,8 @@
 local ProjectileType = {
 	BULLET = {
-		width = 2,
-		height = 6
+		dimensions = {
+			width = 4,
+			height = 12
+		}
 	}
 }

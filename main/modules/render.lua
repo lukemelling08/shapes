@@ -8,7 +8,7 @@ local ProjectileType = require("main.modules.projectile_type")
 function Renderer:init(mesh_url)
 	self.mesh_url = mesh_url
 	self.vertex_resource = go.get(mesh_url, "vertices")
-	self.max_vertices = 120 * 6
+	self.max_vertices = 4096 * 6
 
 	self.vertex_buffer = buffer.create(self.max_vertices, {
 		{
@@ -20,10 +20,16 @@ function Renderer:init(mesh_url)
 			name = hash("normal"),
 			type = buffer.VALUE_TYPE_FLOAT32,
 			count = 3
+		},
+		{
+			name = hash("color"),
+			type = buffer.VALUE_TYPE_FLOAT32,
+			count = 4
 		}
 	})
 	self.positions = buffer.get_stream(self.vertex_buffer, hash("position"))
 	self.normals = buffer.get_stream(self.vertex_buffer, hash("normal"))
+	self.colors = buffer.get_stream(self.vertex_buffer, hash("color"))
 
 	for i = 1, self.max_vertices * 3, 3 do
 		self.normals[i] = 0
@@ -60,24 +66,11 @@ function Renderer:create_shape(width, height, x, y, rotation, colour)
 		local world_x = vertex[1] * cos - vertex[2] * sin + x
 		local world_y = vertex[1] * sin + vertex[2] * cos + y
 
-		table.insert(self.vertices, {world_x, world_y, 0})
+		table.insert(self.vertices, {
+			position = {world_x, world_y, 0},
+			colour = colour
+		})
 	end
-end
-
-function Renderer:draw_entity(entity, interpolation)
-	local x = entity.pos.previous.x
-	+ (entity.pos.x - entity.pos.previous.x) * interpolation
-
-	local y = entity.pos.previous.y
-	+ (entity.pos.y - entity.pos.previous.y) * interpolation
-
-	self:create_shape(
-		entity.dimensions.width,
-		entity.dimensions.height,
-		x,
-		y,
-		entity.rotation
-	)
 end
 
 function Renderer:flush()
@@ -88,11 +81,17 @@ function Renderer:flush()
 	end
 
 	for i, vertex in ipairs(self.vertices) do
-		local offset = (i - 1) * 3
+		local position_offset = (i - 1) * 3
+		local colour_offset = (i - 1) * 4
 
-		self.positions[offset + 1] = vertex[1]
-		self.positions[offset + 2] = vertex[2]
-		self.positions[offset + 3] = vertex[3]
+		self.positions[position_offset + 1] = vertex.position[1]
+		self.positions[position_offset + 2] = vertex.position[2]
+		self.positions[position_offset + 3] = vertex.position[3]
+
+		self.colors[colour_offset + 1] = vertex.colour[1]
+		self.colors[colour_offset + 2] = vertex.colour[2]
+		self.colors[colour_offset + 3] = vertex.colour[3]
+		self.colors[colour_offset + 4] = vertex.colour[4]
 	end
 
 	for i = vertex_count * 3 + 1, self.max_vertices * 3 do

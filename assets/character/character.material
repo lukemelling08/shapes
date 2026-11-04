@@ -8,3 +8,17 @@ vertex_constants {
   value {
   }
 }
+attributes {
+  name: "position"
+  semantic_type: SEMANTIC_TYPE_POSITION
+}
+attributes {
+  name: "color"
+  semantic_type: SEMANTIC_TYPE_COLOR
+  double_values {
+    v: 1.0
+    v: 1.0
+    v: 1.0
+    v: 1.0
+  }
+}

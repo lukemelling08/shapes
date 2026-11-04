@@ -9,40 +9,52 @@ local Renderer = require("main.modules.render")
 local InputHandler = require("main.modules.input_handler")
 local Camera = require("main.modules.camera")
 local EntityType = require("main.modules.entity_type")
+local Debris = require("main.modules.debris")
 
-function Entity:new()
+function Entity:new(data)
+	data = data or {}
+
+	local function default(value, fallback)
+		if value == nil then
+			return fallback
+		end
+		return value
+	end
+
+	local class = data.class or {}
+
 	local entity = {
 		id = Entity.next_id,
+
 		pos = {
-			-- current x and y
-			x = 0,
-			y = 0,
+			x = data.pos and data.pos.x or 0,
+			y = data.pos and data.pos.y or 0,
 			previous = {
-				x = 0,
-				y = 0
+				x = data.pos and data.pos.x or 0,
+				y = data.pos and data.pos.y or 0
 			}
 		},
-		velocity = {
-			x = 0,
-			y = 0,
-		},
-		acceleration = {
+
+		velocity = default(data.velocity, {x = 0, y = 0}),
+		acceleration = default(data.acceleration, class.acceleration or {
 			speed = 500,
 			x = 0,
 			y = 0
-		},
-		speed = {
+		}),
+		speed = default(data.speed, class.speed or {
 			base = 25,
 			max = 45
-		},
-		dimensions = {
+		}),
+		dimensions = default(data.dimensions, class.dimensions or {
 			height = 8,
 			width = 8
-		},
-		colour = {1, 0.1, 0.1, 1},
-		friction = 200,
-		rotation = 0,
-		type = nil
+		}),
+		colour = default(data.colour, class.colour or {1, 1, 1, 1}),
+		friction = default(data.friction, class.friction or 200),
+		rotation = default(data.rotation, 0),
+		type = default(data.type, class.type),
+		class = class,
+		owner = data.owner
 	}
 
 	function entity:register()
@@ -54,7 +66,7 @@ function Entity:new()
 	end
 
 	function entity:render()
-		Renderer:create_shape(self.dimensions.width, self.dimensions.height, self.pos.x, self.pos.y, self.rotation, self.colour)
+		Renderer:create_shape(self.dimensions.width, self.dimensions.height, self.pos.x, self.pos.y, self.rotation + math.pi/2, self.colour)
 	end
 
 	function entity:set_pos(x, y)
@@ -66,6 +78,42 @@ function Entity:new()
 		return self.pos.x, self.pos.y
 	end
 
+	function entity:on_collision(other)
+		if self.owner == other or other.owner == self then return end
+		print("Entity", self.id, "collided with entity", other.id)
+
+		if self.type == EntityType.PROJECTILE or other.type == EntityType.PROJECTILE then
+			-- projectile collision event
+			local isSelfProjectile = self.type == EntityType.PROJECTILE
+			local isOtherProjectile = other.type == EntityType.PROJECTILE
+
+			if isSelfProjectile and isOtherProjectile then
+				self:damage()()
+				other:damage()
+			end
+			if isSelfProjectile and not isOtherProjectile then
+				self:remove()
+				other:damage()
+			elseif not isSelfProjectile and isOtherProjectile then
+				other:remove()
+				self:damage()
+			end
+		end
+	end
+
+	function entity:damage()
+		self:kill()
+	end
+
+	function entity:kill()
+		Debris:spawn(self)
+		self:remove()
+	end
+
+	function entity:remove()
+		self:unregister()
+	end
+	
 	function entity:face(x, y)
 		local dx = x - self.pos.x
 		local dy = y - self.pos.y
@@ -134,43 +182,8 @@ function Entity:new()
 		end
 	end
 
-	Entity.next_id = Entity.next_id + 1
-	return entity
-end
-
-function Entity:create(data)
-	data = data or {}
-	local entity = self:new()
-	if data.pos and data.pos.x and data.pos.y then
-		entity:set_pos(data.pos.x, data.pos.y)
-	end
-	if data.type then
-		entity.type = data.type
-	end
-	if data.velocity then
-		if data.velocity.x then
-			entity.velocity.x = data.velocity.x
-		end
-		if data.velocity.y then
-			entity.velocity.y = data.velocity.y
-		end
-	end
-	if data.friction then
-		entity.friction = data.friction
-	end
-	if data.rotation then
-		entity.rotation = data.rotation
-	end
-
-	if data.dimensions then
-		entity.dimensions.width = data.dimensions.width or entity.dimensions.width
-		entity.dimensions.height = data.dimensions.height or entity.dimensions.height
-	end
-
-	if data.colour then
-		entity.colour = data.colour
-	end
 	entity:register()
+	Entity.next_id = Entity.next_id + 1
 	return entity
 end
 

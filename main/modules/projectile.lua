@@ -2,21 +2,22 @@ local Projectile = {}
 
 local Entity = require("main.modules.entity")
 local EntityType = require("main.modules.entity_type")
+local EntityClass = require("main.modules.entity_class")
 local Camera = require("main.modules.camera")
 
-function Projectile:fire(proj_type, proj_position, proj_velocity, proj_rotation, proj_friction)
-	local projectile = Entity:create({
-		type = proj_type,
+function Projectile:fire(entity_class, proj_owner, proj_position, proj_rotation)
+	local projectile = Entity:new({
+		class = entity_class,
 		pos = {
 			x = proj_position.x,
 			y = proj_position.y
 		},
+		owner = proj_owner,
 		velocity = {
-			x = proj_velocity.x,
-			y = proj_velocity.y
+			x = math.cos(proj_rotation) * entity_class.speed.base,
+			y = math.sin(proj_rotation) * entity_class.speed.base
 		},
-		friction = proj_friction,
-		rotation = proj_rotation,
+		rotation = proj_rotation
 	})
 
 	return projectile

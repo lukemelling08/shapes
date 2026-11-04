@@ -1,5 +1,6 @@
 [bootstrap]
 main_collection = /main/main.collectionc
+render = /main/render/custom.renderc
 
 [script]
 shared_state = 1
@@ -25,5 +26,5 @@ show_fullscreen_button = 0
 title = shapes
 
 [engine]
-fixed_update_frequency = 120
+fixed_update_frequency = 240
 
