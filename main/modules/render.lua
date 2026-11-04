@@ -3,7 +3,7 @@ local Renderer = {
 }
 
 local EntityType = require("main.modules.entity_type")
-local ProjectileType = require("main.modules.entity_type")
+local ProjectileType = require("main.modules.projectile_type")
 
 function Renderer:init(mesh_url)
 	self.mesh_url = mesh_url
@@ -38,22 +38,12 @@ function Renderer:clear()
 	self.vertices = {}
 end
 
-function Renderer:render_shape(entity, x, y, cos, sin)
-	if entity.type == EntityType.PLAYER then
-		self:draw_player(x, y, cos, sin)
-
-	elseif entity.type == EntityType.PROJECTILE then
-		self:draw_projectile(2, x, y, cos, sin)
-
-	elseif entity.type == EntityType.ENEMY then
-		self:draw_enemy(x, y, cos, sin)
-	end
-end
-
-
-function Renderer:draw_rectangle(width, height, x, y, cos, sin)
+function Renderer:create_shape(width, height, x, y, rotation, colour)
 	local half_w = width / 2
 	local half_h = height / 2
+
+	local cos = math.cos(rotation)
+	local sin = math.sin(rotation)
 
 	local corners = {
 		{-half_w, -half_h},
@@ -74,34 +64,6 @@ function Renderer:draw_rectangle(width, height, x, y, cos, sin)
 	end
 end
 
-function Renderer:draw_player(x, y, cos, sin)
-	self:draw_rectangle(4, 4, x, y, cos, sin)
-
-	local triangle = {
-		{3, 0},
-		{1.5, 1},
-		{1.5, -1}
-	}
-
-	for _, vertex in ipairs(triangle) do
-		local world_x = vertex[1] * cos - vertex[2] * sin + x
-		local world_y = vertex[1] * sin + vertex[2] * cos + y
-
-		table.insert(self.vertices, {world_x, world_y, 0})
-	end
-end
-
-function Renderer:draw_projectile(projectile_type, x, y, cos, sin)
-	if projectile_type == 2 then
-		self:draw_rectangle(3, 1, x, y, cos, sin)
-	end
-end
-
-function Renderer:draw_enemy(x, y, cos, sin)
-	-- Enemy shape goes here
-	self:draw_rectangle(4, 4, x, y, cos, sin)
-end
-
 function Renderer:draw_entity(entity, interpolation)
 	local x = entity.pos.previous.x
 	+ (entity.pos.x - entity.pos.previous.x) * interpolation
@@ -109,10 +71,13 @@ function Renderer:draw_entity(entity, interpolation)
 	local y = entity.pos.previous.y
 	+ (entity.pos.y - entity.pos.previous.y) * interpolation
 
-	local cos = math.cos(entity.rotation)
-	local sin = math.sin(entity.rotation)
-
-	self:render_shape(entity, x, y, cos, sin)
+	self:create_shape(
+		entity.dimensions.width,
+		entity.dimensions.height,
+		x,
+		y,
+		entity.rotation
+	)
 end
 
 function Renderer:flush()
@@ -121,7 +86,7 @@ function Renderer:flush()
 	if vertex_count > self.max_vertices then
 		error("Renderer vertex capacity exceeded!")
 	end
-	
+
 	for i, vertex in ipairs(self.vertices) do
 		local offset = (i - 1) * 3
 

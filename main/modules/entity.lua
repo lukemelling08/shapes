@@ -35,6 +35,11 @@ function Entity:new()
 			base = 25,
 			max = 45
 		},
+		dimensions = {
+			height = 8,
+			width = 8
+		},
+		colour = {1, 0.1, 0.1, 1},
 		friction = 200,
 		rotation = 0,
 		type = nil
@@ -49,7 +54,7 @@ function Entity:new()
 	end
 
 	function entity:render()
-		Renderer:draw_entity(self, 0.05)
+		Renderer:create_shape(self.dimensions.width, self.dimensions.height, self.pos.x, self.pos.y, self.rotation, self.colour)
 	end
 
 	function entity:set_pos(x, y)
@@ -155,6 +160,15 @@ function Entity:create(data)
 	end
 	if data.rotation then
 		entity.rotation = data.rotation
+	end
+
+	if data.dimensions then
+		entity.dimensions.width = data.dimensions.width or entity.dimensions.width
+		entity.dimensions.height = data.dimensions.height or entity.dimensions.height
+	end
+
+	if data.colour then
+		entity.colour = data.colour
 	end
 	entity:register()
 	return entity
