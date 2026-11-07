@@ -10,6 +10,7 @@ local InputHandler = require("main.modules.input_handler")
 local Camera = require("main.modules.camera")
 local EntityType = require("main.modules.entity_type")
 local Debris = require("main.modules.debris")
+local EntityClass = require("main.modules.entity_class")
 
 function Entity:new(data)
 	data = data or {}
@@ -54,7 +55,8 @@ function Entity:new(data)
 		rotation = default(data.rotation, 0),
 		type = default(data.type, class.type),
 		class = class,
-		owner = data.owner
+		owner = data.owner,
+		lifetime = data.lifetime or -1
 	}
 
 	function entity:register()
@@ -88,25 +90,28 @@ function Entity:new(data)
 			local isOtherProjectile = other.type == EntityType.PROJECTILE
 
 			if isSelfProjectile and isOtherProjectile then
-				self:damage()()
-				other:damage()
-			end
-			if isSelfProjectile and not isOtherProjectile then
 				self:remove()
-				other:damage()
-			elseif not isSelfProjectile and isOtherProjectile then
 				other:remove()
-				self:damage()
+			end
+			if isSelfProjectile ~= isOtherProjectile then
+				local projectile = isSelfProjectile and self or other
+				local target = isSelfProjectile and other or self
+
+				target:damage({source=projectile})
+
+				if projectile.class ~= EntityClass.BULLET then
+					projectile:remove()
+				end
 			end
 		end
 	end
 
-	function entity:damage()
-		self:kill()
+	function entity:damage(dat)
+		self:kill(dat)
 	end
 
-	function entity:kill()
-		Debris:spawn(self)
+	function entity:kill(dat)
+		Debris:spawn(self, dat and dat.source)
 		self:remove()
 	end
 
@@ -137,7 +142,7 @@ function Entity:new(data)
 					self.acceleration.x = -speed
 				elseif InputHandler.keys[hash("d")] then
 					self.acceleration.x = speed
-				end
+				end	
 			end
 
 			if (not InputHandler.keys[hash("w")] and not InputHandler.keys[hash("s")])
@@ -173,7 +178,10 @@ function Entity:new(data)
 		)
 
 		local sprinting = InputHandler.keys[hash("lshift")]
-		local max_speed = sprinting and self.speed.max or self.speed.base
+		local max_speed = self.speed.base
+		if self == Entity.vip.player then
+			max_speed = (sprinting and self.speed.max) or self.speed.base
+		end
 
 		if magnitude > max_speed then
 			local scale = max_speed / magnitude

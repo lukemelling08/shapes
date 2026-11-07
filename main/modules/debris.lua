@@ -2,14 +2,14 @@ local Debris = {
 	fragments = {},
 	rows = 4,
 	columns = 4,
-	lifetime = 6,
-	min_speed = 0.5,
-	max_speed = 1
+	lifetime = 3,
+	min_speed = 4,
+	max_speed = 6
 }
 
 local Renderer = require("main.modules.render")
 
-function Debris:spawn(entity)
+function Debris:spawn(entity, source_entity)
 	local width = entity.dimensions.width
 	local height = entity.dimensions.height
 
@@ -19,6 +19,40 @@ function Debris:spawn(entity)
 	local cos = math.cos(entity.rotation)
 	local sin = math.sin(entity.rotation)
 
+	local dx, dy = 0, 0
+	local impact_x, impact_y = 0, 0
+
+	if source_entity then
+		dx = source_entity.pos.x - source_entity.pos.previous.x
+		dy = source_entity.pos.y - source_entity.pos.previous.y
+
+		local length = math.sqrt(dx * dx + dy * dy)
+
+		if length > 0 then
+			dx, dy = dx / length, dy / length
+		end
+
+		-- Convert bullet position into target-local coordinates
+		local rel_x = source_entity.pos.x - entity.pos.x
+		local rel_y = source_entity.pos.y - entity.pos.y
+
+		impact_x = rel_x * cos + rel_y * sin
+		impact_y = -rel_x * sin + rel_y * cos
+
+		-- Convert bullet direction into target-local coordinates
+		local local_dx = dx * cos + dy * sin
+		local local_dy = -dx * sin + dy * cos
+
+		dx, dy = local_dx, local_dy
+	end
+
+	-- Perpendicular to bullet direction
+	local px, py = -dy, dx
+
+	-- World-space perpendicular for fragment movement
+	local world_px = -dy * cos - dx * sin
+	local world_py = -dy * sin + dx * cos
+
 	for row = 1, self.rows do
 		for column = 1, self.columns do
 			local local_x = (column - 0.5) * fragment_width - width / 2
@@ -27,14 +61,18 @@ function Debris:spawn(entity)
 			local x = entity.pos.x + local_x * cos - local_y * sin
 			local y = entity.pos.y + local_x * sin + local_y * cos
 
-			local angle = math.random() * math.pi * 2
+			-- Measure fragment position relative to bullet impact
+			local side = (local_x - impact_x) * px
+			+ (local_y - impact_y) * py
+
+			local direction = side >= 0 and 1 or -1
 			local speed = math.random(self.min_speed, self.max_speed)
 
 			table.insert(self.fragments, {
 				pos = {x = x, y = y},
 				velocity = {
-					x = math.cos(angle) * speed,
-					y = math.sin(angle) * speed
+					x = world_px * direction * speed,
+					y = world_py * direction * speed
 				},
 				width = fragment_width,
 				height = fragment_height,
@@ -63,7 +101,13 @@ function Debris:update(dt)
 		fragment.rotation = fragment.rotation + fragment.rotation_speed * dt
 		fragment.lifetime = fragment.lifetime - dt
 
-		fragment.colour[4] = fragment.alpha * math.max(0, fragment.lifetime / self.lifetime)
+		local fade_start = self.lifetime * 0.75
+
+		if fragment.lifetime > fade_start then
+			fragment.colour[4] = fragment.alpha
+		else
+			fragment.colour[4] = fragment.alpha * (fragment.lifetime / fade_start)
+		end
 
 		if fragment.lifetime <= 0 then
 			table.remove(self.fragments, i)

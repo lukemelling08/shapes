@@ -57,11 +57,25 @@ end
 
 local counter = 0
 function fixed_update(self, dt)
+	local expired_entities = {}
 	for _, entity in pairs(Entity.active) do
+		if entity.lifetime > 0 then
+			entity.lifetime = entity.lifetime - dt
+			if entity.lifetime <= 0 then
+				table.insert(expired_entities, entity)
+			end
+		end
+		
 		entity.pos.previous.x = entity.pos.x
 		entity.pos.previous.y = entity.pos.y
 		entity:update_pos(dt)
 	end
+
+	for _, entity in ipairs(expired_entities) do
+		entity:remove()
+		pprint(entity)
+	end
+	
 	counter = counter +1
 	if counter == 240 then
 		Entity:new({type=EntityType.PLAYER, pos={x=math.random(-200, 200),y=math.random(-200,200)}, velocity = {x = 3000, y = 900}, friction = 0.1})

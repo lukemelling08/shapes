@@ -17,7 +17,8 @@ function Projectile:fire(entity_class, proj_owner, proj_position, proj_rotation)
 			x = math.cos(proj_rotation) * entity_class.speed.base,
 			y = math.sin(proj_rotation) * entity_class.speed.base
 		},
-		rotation = proj_rotation
+		rotation = proj_rotation,
+		lifetime = 6,
 	})
 
 	return projectile
